@@ -4,33 +4,70 @@
 
 using namespace std;
 
+class Node {
+	public:
+		int level;
+		vector<int> path;
+		int distance;
+		int opt_distance;
+		
+		Node() {
+			level = 0;
+			path.clear();
+			distance = 0;
+			opt_distance = 0;
+		}
+		/*
+		Node(Node& that) {
+			this->level = that.level;
+			this->path = that.path;
+			this->distance = that.distance;
+			this->opt_distance = that.opt_distance;
+		}
+		*/
+};
+
+void sort_vector(vector<Node> &param) {
+	Node temp;
+	if (!param.empty()) {
+	for (int i = 0; i < param.size(); i++) {
+		for (int j = i + 1; j < param.size(); j++) {
+			if (param[j].opt_distance < param[i].opt_distance) {
+				temp = param[i];
+				param[i] = param[j];
+				param[j] = temp;
+			}
+		}
+	}
+	}
+	
+}
+
 int main() {
-	vector<int> first;
-	vector<int> second;
+	vector<Node> Queue;
+	Node first;
+	Node second;
+	Node third;
+	Node fourth;
 	
-	first.push_back(1);
-	first.push_back(2);
-	first.push_back(3);
+	first.opt_distance = 1;
+	second.opt_distance = 2;
+	third.opt_distance = 3;
+	fourth.opt_distance = 4;
 	
-	for (int i = 0; i < first.size(); i++) {
-		cout << first[i] << endl;
+	Queue.push_back(fourth);
+	Queue.push_back(third);
+	Queue.push_back(second);
+	Queue.push_back(first);
+	
+	for (int i = 0; i < Queue.size(); i++) {
+		cout << "i: " << Queue[i].opt_distance << endl;
 	}
-	cout << endl;
-	second = first;
 	
-	for (int i = 0; i < second.size(); i++) {
-		cout << second[i] << endl;
-	}
+	sort_vector(Queue);
 	
-	second.push_back(4);
-	second.push_back(5);
-	
-	for (int i = 0; i < second.size(); i++) {
-		cout << second[i] << endl;
-	}
-	cout << endl;
-	for (int i = 0; i < first.size(); i++) {
-		cout << first[i] << endl;
+	for (int i = 0; i < Queue.size(); i++) {
+		cout << "i: " << Queue[i].opt_distance << endl;
 	}
 	
 	return 0;
