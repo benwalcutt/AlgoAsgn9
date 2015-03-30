@@ -25,17 +25,10 @@ class Node {
 			path = that.path;
 			distance = that.distance;
 			opt_distance = that.opt_distance;
-		}
-		
-		void operator=(const Node& rhs) {
-			level = rhs.level;
-			path = rhs.path;
-			distance = rhs.distance;
-			opt_distance = rhs.opt_distance;
-		}
-		
+		}	
 };
 
+// basic sort...nothing fancy
 void sort_vector(vector<Node> &param) {
 	Node temp;
 	if (!param.empty()) {
@@ -52,6 +45,7 @@ void sort_vector(vector<Node> &param) {
 	
 }
 
+// simple function to check if a value is in a vector
 bool vector_contains(vector<int> &param, int n) {
 	for (int j = 0; j < param.size(); j++) {
 		if (param[j] == n) {return true;}
@@ -61,10 +55,12 @@ bool vector_contains(vector<int> &param, int n) {
 
 /*	Optimal Tour
 	Takes in the adjacency table, the node that is being evaluated, and the number of vertices
-	Searches through each vertex and finds the ones that are not already used in the path or been checked already
-		roughly giving the shortest distance from each vector that doesn't cause a cycle.
+	Searches through each vertex to find the ones not used, we will use those as the rows for searching 
+	Then it searches through each vector again to find the ones NOT in the partial tour, meaning we haven't looked at them yet
 	
-	
+	This will give us the shortest distance FROM each vertex not already in the path.
+	This is the optimal tour of the remaining possible vertices that we use to prune the tree with.
+	Some of the actual code in the function isn't even used, but not sure if its ok to remove.	
 */
 
 int optimal_tour(int* adj_table, Node* target, int vertices) {
@@ -75,6 +71,8 @@ int optimal_tour(int* adj_table, Node* target, int vertices) {
 
 	int hold = INFINITY;
 	
+	// basically we need to remove the last item added to the path so that we can find the shortest distance away from it
+	// this is the only way the compiler would let me
 	if (!target->path.empty()) {
 		shortest_index = target->path.size();
 		hold = target->path[shortest_index - 1];
@@ -109,6 +107,8 @@ int optimal_tour(int* adj_table, Node* target, int vertices) {
 		// reset shortest
 		shortest = INFINITY;
 	}
+	
+	// add in the removed item from path back into path
 	if (hold != INFINITY)
 		target->path.push_back(hold);
 	
@@ -131,13 +131,12 @@ int find_length(int* adj_table, int vertices) {
 	parent->path.push_back(0);
 	parent->opt_distance = optimal_tour(adj_table, parent, vertices);
 	Queue.push_back(*parent);
-//	cout << "here" << endl;
+
 	// then start the loop of searching the queue while it is not empty
 	while (!Queue.empty()) {
 		
 		// copy 0 element of the queue into parent and then erase the begin from the vector
-//		cout << "entered loop" << endl;
-		//parent = &Queue[0];
+		// once again assignment overloading doesn't work
 		parent = new Node;
 		parent->level = Queue[0].level;
 		parent->path = Queue[0].path;
@@ -145,58 +144,47 @@ int find_length(int* adj_table, int vertices) {
 		parent->opt_distance = Queue[0].opt_distance;
 		Queue.erase(Queue.begin());
 		
-//		cout << "starting for loop" << endl;
+		// search through each vertex (starting at 1 because the 0 vector is the root)
 		for (int k = 1; k < vertices; k++) {
-//			cout << "k: " << k << endl;
-//			cout << "checking vertices if in path" << endl;
-//			cout << "PATH: ******* " << endl;
-//			for (int l = 0; l < parent->path.size(); l++) {
-//					cout << parent->path[l] << endl;
-//				}
-//			cout << "distance: " << parent->distance << endl;
+			// we can't use a vertex if it is already in the path
 			if (!vector_contains(parent->path, k)) {
-//				cout << "assigning target" << endl;
+
+				// create a new target and assign it the parent properties since it is a child
+				// overloading assignment operator SHOULD work here but doesn't...
 				target = new Node();
-//				cout << "assigning path" << endl;
 				target->path = parent->path;
-//				cout << "assigning level" << endl;
 				target->level = parent->level + 1;
 				target->distance = parent->distance;
-//				cout << "adding vertex to target path" << endl;
+				// add the vertex to the path because that's the one we are looking at
 				target->path.push_back(k);
-//				cout << "finding last value" << endl;
-//				cout << "parent->level: " << parent->level << endl;
-//				cout << "parent->size: " << parent->path.size() << endl;
-								
+
+				// this is the last value added to the parent
+				// it is recalled so that we can find the distance FROM it to the vertex we just added
 				last_value = parent->path[parent->path.size() - 1];
-//				cout << "last value: " << last_value << endl;
-//				cout << "grabbing dist to node" << endl;
+									// this part grabs the distance from the matrix
 				distance_to_node = adj_table[last_value*vertices + k];
-//				cout << "assigning dist" << endl;
-//				cout << "old distance: " << target->distance;
+				// add it
 				target->distance += distance_to_node;
-//				cout << " new distance: " << target->distance << endl;
-				
-				
-				
-//				cout << "checking level" << endl;
+
+				// check the level, if it is vertices - 1 then we reached a leaf
 				if (target->level != vertices - 1) {
-//					cout << "finding opt tour" << endl;
 					target->opt_distance = optimal_tour(adj_table, target, vertices);
-//					cout << "opt_distance: " << target->opt_distance << endl;
+					// the trimming part
+					// if it is less than minlength, add it to the queue
+					// this is easier than adding it and removing it later
 					if (target->opt_distance <= minlength) {
-//						cout << "pushing back" << endl;
 						Queue.push_back(*target);
-//						cout << "pushed back" << endl;
 					}
 				}
 				else {
+					// found a leaf so do the final calculations
 					last_value = target->path[target->path.size() - 1];
 					distance_to_node = adj_table[last_value*vertices];
 					target->distance += distance_to_node;
+					// reset minlength if we found something smaller
 					if (target->distance < minlength) {
-//						cout << "minlength changed: " << target->distance << endl;
 						minlength = target->distance;
+						// this is for debugging but also in case we need to know the final path
 						final_path = target->path;
 					}
 				}
@@ -204,23 +192,13 @@ int find_length(int* adj_table, int vertices) {
 			}
 		}
 		
-		sort_vector(Queue);
-	// the loop will run through another loop checking each of the node's children (0 to vertices - 1 where index !in path)
-	// you create a new node (target), set the path equal to the parent's path, add distance from last value in path to child to distance, then add child to path
-	// pass child (target) to optimal_tour
-	// check if optimal tour is less than minlength, if so, add the child to the queue
-	// SORT THE QUEUE
-		// if the queue is empty, find the distance from the last item in path back to the root and add it to minlength, then return minlength
-		// else keep going
-		
+		// sort it so that the smallest value is the next to be pulled off
+		// could have been sorted backwards but whatevs
+		sort_vector(Queue);		
 	}
 	
-	//delete parent;
-	//delete target;
-//	cout << "Final path: " << endl;
-//	for (int y = 0; y < final_path.size(); y++) {
-//		cout << final_path[y] << endl;
-//	}
+	delete parent;
+	delete target;
 	return minlength;
 }
 
@@ -250,6 +228,6 @@ int main() {
 		cout << "final: " << input << endl;
 	}
 
-	//delete[] adj_table;
+	delete[] adj_table;
 	return 0;
 }
